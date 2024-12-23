@@ -1,10 +1,27 @@
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
-import random as rdm #might not need this
+import random as rdm #might not need this   
 
 window_w, window_h = 720, 480
 fps, t1, t2 = 60, 0, 0
+player_stance = 0 #red is 0, green is 1, blue is 2, player starts 0 and on move becomes permanently 1 or 2
+pause = False
+move_queue = [None]*10 #only input is handled, movement is not implemented yet
+m_count = 0
+game_over = False
+
+def stanceColor(stance):
+    if stance==0:
+        print('hell')
+        return [1, 0, 0]
+    elif stance==1:
+        print('earth')
+        return [0,1,0]
+    elif stance==2:
+        print('heaven')
+        return [0,0,1]
+
 
 def findZone(dy, dx):
     if dy>=0 and dx>=0:
@@ -138,11 +155,13 @@ def iterate():
     glLoadIdentity()
 
 def display():
-    global window_h, window_w
+    global window_h, window_w, player_stance
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glClearColor(0,0,0,0)
     glLoadIdentity()
     iterate()
+    color_arr = stanceColor(player_stance)
+    glColor3f(color_arr[0],color_arr[1],color_arr[2])
     mCircle(200,200,5)
     glutSwapBuffers()
 
@@ -152,9 +171,31 @@ def convert_coordinate(x,y):
     real_y = (window_h/2) - y
     return real_x, real_y
 
+def keyboardListener(key, x, y):
+    global pause, player_stance, game_over, move_queue, m_count
+    if pause==False:
+        if game_over==False:
+            if key==b'q':
+                player_stance = 1 #green stance
+            if key==b'e':
+                player_stance = 2 #blue stance
+            #moving left and right
+            if key==b'a':
+                move_queue[m_count] = False
+                m_count += 1
+                if m_count >= len(move_queue):
+                    m_count = 0
+                print(move_queue)
+            if key==b'd': 
+                move_queue[m_count] = True
+                m_count +=1
+                if m_count >= len(move_queue):
+                    m_count = 0
+                print(move_queue)
+    glutPostRedisplay()
+
 
 def init():
-
     glClearColor(0,0,0,0)
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
@@ -170,5 +211,6 @@ window = glutCreateWindow(b"Test of Strength")
 init()
 
 glutDisplayFunc(display)
+glutKeyboardFunc(keyboardListener)
 
 glutMainLoop()
