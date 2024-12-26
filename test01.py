@@ -2,27 +2,32 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import numpy
-import random as rdm #might not need this   
+import random as rdm
 
+# Window and game state variables
 window_w, window_h = 720, 480
 fps, t1, t2 = 60, 0, 0
-player_stance = 0 #red is 0, green is 1, blue is 2, player starts 0 and on move becomes permanently 1 or 2
+player_stance = 0  # red is 0, green is 1, blue is 2
 pause = False
-move_queue = [None]*10 #only input is handled, movement is not implemented yet
+move_queue = [None]*10
 m_count = 0
 game_over = False
 
-def stanceColor(stance):
-    if stance==0:
-        print('hell')
-        return [1, 0, 0]
-    elif stance==1:
-        print('earth')
-        return [0,1,0]
-    elif stance==2:
-        print('heaven')
-        return [0,0,1]
+# Player position and movement
+player_x = 360
+player_y = 240
+move_speed = 5
 
+def stanceColor(stance):
+    if stance == 0:
+        glColor3f(1, 0, 0)  # Red - Hell stance
+        return [1, 0, 0]
+    elif stance == 1:
+        glColor3f(0, 1, 0)  # Green - Earth stance
+        return [0, 1, 0]
+    elif stance == 2:
+        glColor3f(0, 0, 1)  # Blue - Heaven stance
+        return [0, 0, 1]
 
 def findZone(dy, dx):
     if dy>=0 and dx>=0:
@@ -46,7 +51,6 @@ def findZone(dy, dx):
         else:
             line_zone = 6
     return line_zone
-
 
 def converttoZone0(x,y,z):
     if z==0:
@@ -85,7 +89,6 @@ def converttoZone(x,y,z):
         return [x,-y]
 
 def mLine(x1, y1, x2, y2):
-
     dy = y2-y1
     dx = x2-x1
     glBegin(GL_POINTS)
@@ -110,15 +113,12 @@ def mLine(x1, y1, x2, y2):
             d+=ne_inc
             x1_p+=1
             y1_p+=1
-        # print(x1_p,y1_p)
-        # print('important', x2_p, y2_p)
         converted_coords = converttoZone(x1_p, y1_p, zone)
         x1, y1 = converted_coords[0], converted_coords[1]
         
         glBegin(GL_POINTS)
         glVertex2f(x1, y1)
         glEnd()
-
 
 def mCircle(c_x, c_y, radius):
     d, x, y = 1-radius, 0, radius
@@ -132,7 +132,6 @@ def mCircle(c_x, c_y, radius):
             x+=1
             y-=1
         circlePoints(x,y,c_x,c_y)
-
 
 def circlePoints(x,y,cx,cy):
     glBegin(GL_POINTS)
@@ -154,67 +153,54 @@ def iterate():
     glOrtho(0.0, window_w, 0.0, window_h, 0.0, 1.0)
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
-    
-    
+
 def display():
+    global player_x, player_y, player_stance
+    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glClearColor(0, 0, 0, 0)
     glLoadIdentity()
     iterate()
 
-    # Head  
-    mCircle(360, 240, 10)
+ 
+    stanceColor(player_stance)
 
-    # Body and Limbs  
+ 
+    # Head
+    mCircle(player_x, player_y, 10)
+
     # Body
-    mLine(360, 230, 360, 200)  # Center line
+    mLine(player_x, player_y-10, player_x, player_y-40)  # Center line
     
     # Arms
-    mLine(360, 220, 345, 210)  # Left upper arm
-    mLine(345, 210, 335, 195)   
-    mLine(360, 220, 375, 210)  # Right upper arm
-    mLine(375, 210, 385, 195)   
+    mLine(player_x, player_y-20, player_x-15, player_y-30)  # Left upper arm
+    mLine(player_x-15, player_y-30, player_x-25, player_y-45)   
+    mLine(player_x, player_y-20, player_x+15, player_y-30)  # Right upper arm
+    mLine(player_x+15, player_y-30, player_x+25, player_y-45)  
     
     # Legs
-    mLine(360, 200, 350, 180)  # Left upper leg
-    mLine(350, 180, 345, 160)  
-    mLine(360, 200, 370, 180)  # Right upper leg
-    mLine(370, 180, 375, 160)  
+    mLine(player_x, player_y-40, player_x-10, player_y-60)  # Left upper leg
+    mLine(player_x-10, player_y-60, player_x-15, player_y-80)  
+    mLine(player_x, player_y-40, player_x+10, player_y-60)  # Right upper leg
+    mLine(player_x+10, player_y-60, player_x+15, player_y-80)   
 
-    # Hands and Feet  
-    mCircle(335, 195, 3)  # Left hand
-    mCircle(385, 195, 3)    
-    mCircle(345, 160, 3)  # Left foot
-    mCircle(375, 160, 3)   
+    # Hands and Feet
+    mCircle(player_x-25, player_y-45, 3)  # Left hand
+    mCircle(player_x+25, player_y-45, 3)  
+    mCircle(player_x-15, player_y-80, 3)  # Left foot
+    mCircle(player_x+15, player_y-80, 3)  
 
-    # Right Hand  
-    mLine(380, 195, 390, 195)  # Top line
-
-    # Sword  
-    mLine(385, 195, 385, 210)  # Handle
-    
-    # Handle Grip
-    mLine(385, 210, 390, 210)
-    mLine(380, 210, 385, 210)
-    
-    # Blade
-    mLine(385, 210, 385, 240)  # Middle  
-    mLine(380, 210, 380, 240)  # Left  
-    mLine(390, 210, 390, 240)  # Right  
-
-    # Sword Tip
-    mLine(380, 240, 385, 250)
-    mLine(390, 240, 385, 250)
-
-    # Pommel
-    mCircle(385, 195, 3)
-    
-    # Pommel details
-    mLine(385, 195, 387, 193)
-    mLine(385, 195, 383, 193)
+    # Sword
+    mLine(player_x+25, player_y-45, player_x+25, player_y-30)  # Handle
+    mLine(player_x+25, player_y-30, player_x+30, player_y-30)  # Cross guard
+    mLine(player_x+20, player_y-30, player_x+25, player_y-30)
+    mLine(player_x+25, player_y-30, player_x+25, player_y)  # Blade
+    mLine(player_x+20, player_y-30, player_x+20, player_y)
+    mLine(player_x+30, player_y-30, player_x+30, player_y)
+    mLine(player_x+20, player_y, player_x+25, player_y+10)  # Tip
+    mLine(player_x+30, player_y, player_x+25, player_y+10)
 
     glutSwapBuffers()
-
 
 def convert_coordinate(x,y):
     global window_w, window_h
@@ -223,39 +209,43 @@ def convert_coordinate(x,y):
     return real_x, real_y
 
 def keyboardListener(key, x, y):
-    global pause, player_stance, game_over, move_queue, m_count
-    if pause==False:
-        if game_over==False:
-            if key==b'q':
-                player_stance = 1 #green stance
-            if key==b'e':
-                player_stance = 2 #blue stance
-            #moving left and right
-            if key==b'a':
-                move_queue[m_count] = False
-                m_count += 1
-                if m_count >= len(move_queue):
-                    m_count = 0
-                print(move_queue)
-            if key==b'd': 
-                move_queue[m_count] = True
-                m_count +=1
-                if m_count >= len(move_queue):
-                    m_count = 0
-                print(move_queue)
+    global pause, player_stance, game_over, move_queue, m_count, player_x, player_y
+    
+    if not pause and not game_over:
+        # Stance changes
+        if key == b'q':
+            player_stance = 1  # Green/Earth stance
+        elif key == b'e':
+            player_stance = 2  # Blue/Heaven stance
+        elif key == b'r':
+            player_stance = 0  # Red/Hell stance
+            
+        # Movement
+        elif key == b'w':  # Up
+            player_y += move_speed
+        elif key == b's':  # Down
+            player_y -= move_speed
+        elif key == b'a':  # Left
+            player_x -= move_speed
+        elif key == b'd':  # Right
+            player_x += move_speed
+            
+        # Keep player within window bounds
+        player_x = max(50, min(window_w - 50, player_x))
+        player_y = max(100, min(window_h - 50, player_y))
+    
     glutPostRedisplay()
-
 
 def init():
     glClearColor(0,0,0,0)
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
-    gluPerspective(104,	1,	1,	1000.0)
+    gluPerspective(104, 1, 1, 1000.0)
 
-
+# Initialize and run the game
 glutInit()
-glutInitWindowSize(window_w,window_h)
-glutInitWindowPosition(0,0)
+glutInitWindowSize(window_w, window_h)
+glutInitWindowPosition(0, 0)
 glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA)
 
 window = glutCreateWindow(b"Test of Strength")
