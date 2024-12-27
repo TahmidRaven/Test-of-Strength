@@ -6,7 +6,7 @@ from OpenGL.GLUT.fonts import GLUT_BITMAP_TIMES_ROMAN_24,  GLUT_BITMAP_HELVETICA
 import random as rdm
 
 # Window and game state variables
-difficulty = [0.5,1,2]
+difficulty = [1,2,3]
 difficulty_select = 1 #these are multipliers for difficulty, when you choose easy normal hard, just direct ei multiplier will be chosen 
 window_w, window_h = 720, 480
 fps, t1, t2 = 60, 0, 0
@@ -24,9 +24,11 @@ points = 0
 hit_point = 5
 boss_poise = 0
 start_time, timer = 0, 0
-enemy_max, enemy_count = 2, 0
-
+enemy_max, enemy_count = 1, 0
+knight_last_shot, witch_last_shot = 0, 0
 boss_alive = False
+projectiles = [] #x,y, color and direction
+
 
 
 game_state = ["Title", "Level_1", "Level_2", "Level_3"]
@@ -284,6 +286,35 @@ def draw_goblin(x, y):
     mTriangle(x - 5, y, x - 8, y + 5, x - 2, y + 2)  # Left ear
     mTriangle(x + 5, y, x + 8, y + 5, x + 2, y + 2)
 
+def knight_shoot():
+    global knight_last_shot, projectiles, boss_alive, enemy_coords, player_x
+    current_time = glutGet(GLUT_ELAPSED_TIME)
+    #x,y, color and direction 1 = right, 0 = left
+    if current_time - knight_last_shot >= 4000 and boss_alive:
+        if enemy_coords[0][0]>player_x:
+            projectiles.append([enemy_coords[0][0], enemy_coords[0][1], rdm.randint(0,2), 0])
+        else:
+            projectiles.append([enemy_coords[0][0], enemy_coords[0][1], rdm.randint(0,2), 1])
+        knight_last_shot = current_time
+
+def witch_shoot(witch):
+    global witch_last_shot, projectiles, player_x
+    current_time = glutGet(GLUT_ELAPSED_TIME)
+    #x,y, color and direction 1 = right, 0 = left
+    if current_time - witch_last_shot >= 4000:
+        if witch[0]>player_x:
+            projectiles.append([witch[0], witch[1], rdm.randint(0,2), 0])
+        else:
+            projectiles.append([witch[0], witch[1], rdm.randint(0,2), 1])
+        witch_last_shot = current_time
+
+def goblin_move(goblin):
+    global player_x
+    if goblin[0]>player_x:
+        goblin[0] -= 1
+    else:
+        goblin[0] += 1
+
 def iterate():
     global window_h, window_w
     glViewport(0, 0, window_w, window_h)
@@ -295,7 +326,7 @@ def iterate():
 
 def display():
     #unfortunately, everything is displayed here
-    global player_x, player_y, player_stance, t1, window_h, window_w, player_dir, ground, player_state, player_attack_state, points, hit_point, current_state, timer
+    global player_x, player_y, player_stance, t1, window_h, window_w, player_dir, ground, player_state, player_attack_state, points, hit_point, current_state, timer, boss_poise
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glClearColor(0, 0, 0, 0)
@@ -308,13 +339,19 @@ def display():
     
     if current_state!="Title":
         glColor3f(0.5,0.5,0.5)
-        glRasterPos2f(0,0)
+        glRasterPos2f(50,window_h-50)
         point = f"Points: {points}"
         hp = f"Health: {hit_point}"
         for letter in point:
             glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, ord(letter))
+        glRasterPos2f(200,window_h-50)
         for letter in hp:
             glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, ord(letter))
+        if boss_poise!=0:
+            glRasterPos2f(window_w-200,window_h-50)
+            poise = f"Poise: {boss_poise}"
+            for letter in poise:
+                glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, ord(letter))
 
         # Head
         glColor3f(0.8,0.8,0.8)
@@ -438,14 +475,22 @@ def display():
     enemy_spawner()
     enemy_drawer()
     enemy_collision()
+    projectile_drawer()
 
     glutSwapBuffers()
 
+def projectile_drawer():
+    global projectiles
+    for projectile in projectiles:
+        if projectile!=None:
+            #x,y, color and direction 1 = right, 0 = left
+            stanceColor(projectile[2])
+            mCircle(projectile[0], projectile[1], 5)
 
 def enemy_spawner():
-    global start_time, timer, current_state, enemy_coords, ground, enemy_max, enemy_count, boss_alive
+    global start_time, timer, current_state, enemy_coords, ground, enemy_max, enemy_count, boss_alive, difficulty, difficulty_select, boss_poise
     if (timer-start_time)%10 == 0:
-        if enemy_count<enemy_max:
+        if enemy_count<enemy_max+difficulty[difficulty_select]:
             if current_state=='Level_3':
                 if points<1000:
                 # enemy_coords.append([rdm.randint(20, window_w-20), ground-100, rdm.randint(0,2)]) final code
@@ -454,8 +499,10 @@ def enemy_spawner():
                     print(enemy_count, enemy_coords)
                     print('??')
                 else:
-                    enemy_coords = [[window_w-100, ground-40, 2]]
-                    boss_alive = True
+                    if boss_alive==False:
+                        enemy_coords = [[window_w-100, ground-20, 2]]
+                        boss_alive = True
+                        boss_poise = 500*difficulty[difficulty_select]
 
 def enemy_drawer():
     global enemy_coords, current_state
@@ -472,26 +519,57 @@ def enemy_drawer():
 
 
 def enemy_collision():
-    global enemy_coords, player_attack_state, player_x, player_y, points, player_dir,enemy_count
+    global enemy_coords, player_attack_state, player_x, player_y, points, player_dir,enemy_count,boss_alive, boss_poise
     if player_attack_state == 1:
-        for coord in range(len(enemy_coords)):
-            if enemy_coords[coord]!=None:
-                if player_dir == 0:
-                    if collision(player_x+25, player_x+80, player_y-50, player_y-40, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
-                        enemy_coords[coord] = None
-                        points += 100
-                        enemy_count-=1
-                else:
-                    if collision(player_x-80, player_x-25, player_y-50, player_y-40, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
-                        enemy_coords[coord] = None
-                        points += 100
-                        enemy_count-=1
+        if boss_alive==False:
+            for coord in range(len(enemy_coords)):
+                if enemy_coords[coord]!=None:
+                    if player_dir == 0:
+                        if collision(player_x+25, player_x+80, player_y-50, player_y-40, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
+                            enemy_coords[coord] = None
+                            points += 100
+                            enemy_count-=1
+                    else:
+                        if collision(player_x-80, player_x-25, player_y-50, player_y-40, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
+                            enemy_coords[coord] = None
+                            points += 100
+                            enemy_count-=1
+        else:
+            print(player_x+25, player_x+80, player_y-50, player_y-40, enemy_coords[0][0], enemy_coords[0][0], enemy_coords[0][1], enemy_coords[0][1])
+            if player_dir == 0:
+                if collision(player_x+25, player_x+80, player_y-50, player_y-40, enemy_coords[0][0]-20, enemy_coords[0][0]+20, enemy_coords[0][1]-100, enemy_coords[0][1]+200):
+                    print('?')
+                    if boss_poise>0:
+                        boss_poise -= 50
+                    else:
+                        enemy_coords[0] = None
+                        boss_alive = False
+            else:
+                if collision(player_x-80, player_x-25, player_y-50, player_y-40, enemy_coords[0][0]-20, enemy_coords[0][0]+20, enemy_coords[0][1]-100, enemy_coords[0][1]+200):
+                    print('??')
+                    if boss_poise>0:
+                        boss_poise -= 50
+                    else:
+                        enemy_coords[0] = None
+                        boss_alive = False
+            
 
-
+def projectile_animation():
+    global projectiles, window_w
+    for projectile in range(len(projectiles)):
+        if projectiles[projectile]!=None:
+            #x,y, color and direction 1 = right, 0 = left
+            if projectiles[projectile][3]==1:
+                projectiles[projectile][0] += 10
+            else:
+                projectiles[projectile][0] -= 10
+            if projectiles[projectile][0] > window_w or projectiles[projectile][0]<0:
+                projectiles[projectile] = None
+                
 
 
 def fps_animation():
-    global move_queue, move_speed, player_x, player_y, t2, player_dir, jump_acceleration, gravity, ground, player_state, move_acceleration
+    global move_queue, move_speed, player_x, player_y, t2, player_dir, jump_acceleration, gravity, ground, player_state, move_acceleration, enemy_coords, boss_alive
     max = 20
     if (1000/fps-(t1-t2)<=0):
         for move in range(len(move_queue)):
@@ -510,7 +588,14 @@ def fps_animation():
                 else:
                     player_x += 200
                     move_queue[move] = None
-
+        projectile_animation()
+        if boss_alive==False:
+            for enemy in enemy_coords:
+                if enemy!=None: #0 is goblin, 1 is witch x y type
+                    if enemy[2] == 0:
+                        goblin_move(enemy)
+                    elif enemy[2] == 1:
+                        witch_shoot(enemy)
         if move_acceleration>max:
             move_acceleration = max
         if move_acceleration<-max:
