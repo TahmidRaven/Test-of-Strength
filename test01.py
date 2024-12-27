@@ -171,7 +171,8 @@ def iterate():
     glLoadIdentity()
 
 def display():
-    global player_x, player_y, player_stance, t1, window_h, window_w, player_dir, ground, player_state
+    #unfortunately, everything is displayed here
+    global player_x, player_y, player_stance, t1, window_h, window_w, player_dir, ground, player_state, player_attack_state
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glClearColor(0, 0, 0, 0)
@@ -205,26 +206,65 @@ def display():
     mCircle(player_x+15, player_y-80, 3)  
 
     stanceColor(player_stance)
+    #0 neutral, 1 attack, 2 block
     # Right Sword
     if player_dir == 0:
-        mLine(player_x+25, player_y-45, player_x+25, player_y-30)  # Handle
-        mLine(player_x+25, player_y-30, player_x+30, player_y-30)  # Cross guard
-        mLine(player_x+20, player_y-30, player_x+25, player_y-30)
-        mLine(player_x+25, player_y-30, player_x+25, player_y)  # Blade
-        mLine(player_x+20, player_y-30, player_x+20, player_y)
-        mLine(player_x+30, player_y-30, player_x+30, player_y)
-        mLine(player_x+20, player_y, player_x+25, player_y+10)  # Tip
-        mLine(player_x+30, player_y, player_x+25, player_y+10)
+        if player_attack_state == 2:
+            mLine(player_x+25, player_y-45, player_x+25, player_y-30)  # Handle
+            mLine(player_x+25, player_y-30, player_x+30, player_y-30)  # Cross guard
+            mLine(player_x+20, player_y-30, player_x+25, player_y-30)
+            mLine(player_x+25, player_y-30, player_x+25, player_y)  # Blade
+            mLine(player_x+20, player_y-30, player_x+20, player_y)
+            mLine(player_x+30, player_y-30, player_x+30, player_y)
+            mLine(player_x+20, player_y, player_x+25, player_y+10)  # Tip
+            mLine(player_x+30, player_y, player_x+25, player_y+10)
+        elif player_attack_state == 1:
+            mLine(player_x+25, player_y-45, player_x+40, player_y-45)  # Handle
+            mLine(player_x+40, player_y-40, player_x+40, player_y-45)  # Cross guard
+            mLine(player_x+40, player_y-45, player_x+40, player_y-50)
+            mLine(player_x+40, player_y-45, player_x+70, player_y-45)  # Blade
+            mLine(player_x+40, player_y-40, player_x+70, player_y-40)
+            mLine(player_x+40, player_y-50, player_x+70, player_y-50)
+            mLine(player_x+70, player_y-40, player_x+80, player_y-45)  # Tip
+            mLine(player_x+70, player_y-50, player_x+80, player_y-45)
+        elif player_attack_state == 0:
+            mLine(player_x+25, player_y-45, player_x+30, player_y-30)  # Handle
+            mLine(player_x+25, player_y-25, player_x+30, player_y-30)  # Cross guard
+            mLine(player_x+30, player_y-30, player_x+35, player_y-35)
+            mLine(player_x+25, player_y-25, player_x+35, player_y)
+            mLine(player_x+30, player_y-30, player_x+42, player_y)  # Blade
+            mLine(player_x+35, player_y-35, player_x+48, player_y-5)
+            mLine(player_x+35, player_y, player_x+43, player_y+10)  # Tip
+            mLine(player_x+43, player_y+10, player_x+48, player_y-7)
     else:
+        if player_attack_state == 2:
         # Right Sword
-        mLine(player_x-25, player_y-45, player_x-25, player_y-30)  # Handle
-        mLine(player_x-25, player_y-30, player_x-30, player_y-30)  # Cross guard
-        mLine(player_x-20, player_y-30, player_x-25, player_y-30)
-        mLine(player_x-25, player_y-30, player_x-25, player_y)  # Blade
-        mLine(player_x-20, player_y-30, player_x-20, player_y)
-        mLine(player_x-30, player_y-30, player_x-30, player_y)
-        mLine(player_x-20, player_y, player_x-25, player_y+10)  # Tip
-        mLine(player_x-30, player_y, player_x-25, player_y+10)
+            mLine(player_x-25, player_y-45, player_x-25, player_y-30)  # Handle
+            mLine(player_x-25, player_y-30, player_x-30, player_y-30)  # Cross guard
+            mLine(player_x-20, player_y-30, player_x-25, player_y-30)
+            mLine(player_x-25, player_y-30, player_x-25, player_y)  # Blade
+            mLine(player_x-20, player_y-30, player_x-20, player_y)
+            mLine(player_x-30, player_y-30, player_x-30, player_y)
+            mLine(player_x-20, player_y, player_x-25, player_y+10)  # Tip
+            mLine(player_x-30, player_y, player_x-25, player_y+10)
+        elif player_attack_state == 1:
+            mLine(player_x-25, player_y-45, player_x-40, player_y-45)  # Handle
+            mLine(player_x-40, player_y-40, player_x-40, player_y-45)  # Cross guard
+            mLine(player_x-40, player_y-45, player_x-40, player_y-50)
+            mLine(player_x-40, player_y-45, player_x-70, player_y-45)  # Blade
+            mLine(player_x-40, player_y-40, player_x-70, player_y-40)
+            mLine(player_x-40, player_y-50, player_x-70, player_y-50)
+            mLine(player_x-70, player_y-40, player_x-80, player_y-45)  # Tip
+            mLine(player_x-70, player_y-50, player_x-80, player_y-45)
+        elif player_attack_state == 0:
+            mLine(player_x-25, player_y-45, player_x-30, player_y-30)  # Handle
+            mLine(player_x-25, player_y-25, player_x-30, player_y-30)  # Cross guard
+            mLine(player_x-30, player_y-30, player_x-35, player_y-35)
+            mLine(player_x-25, player_y-25, player_x-35, player_y)
+            mLine(player_x-30, player_y-30, player_x-42, player_y)  # Blade
+            mLine(player_x-35, player_y-35, player_x-48, player_y-5)
+            mLine(player_x-35, player_y, player_x-43, player_y+10)  # Tip
+            mLine(player_x-43, player_y+10, player_x-48, player_y-7)
 
     #sets state to regular if on ground
 
@@ -323,18 +363,30 @@ def keyboardListener(key, x, y):
             if m_count >= len(move_queue):
                 m_count = 0
         if key==b's':
-
             move_queue[m_count] = 2
             m_count +=1
             if m_count >= len(move_queue):
                 m_count = 0
-
             
         # Keep player within window bounds
         player_x = max(0, min(window_w, player_x))
         player_y = max(0, min(window_h, player_y))
     
     glutPostRedisplay()
+
+def mouseListener(button, state, x, y):
+    global player_attack_state
+    if button==GLUT_LEFT_BUTTON:
+        if state==GLUT_DOWN:
+            player_attack_state = 1
+        if state==GLUT_UP:
+            player_attack_state = 0
+    if button==GLUT_RIGHT_BUTTON:
+        if state==GLUT_DOWN:
+            player_attack_state = 2
+        if state==GLUT_UP:
+            player_attack_state = 0
+
 
 def init():
     glClearColor(0,0,0,0)
@@ -354,5 +406,6 @@ init()
 glutDisplayFunc(display)
 glutIdleFunc(animate)
 glutKeyboardFunc(keyboardListener)
+glutMouseFunc(mouseListener)
 
 glutMainLoop()
