@@ -490,17 +490,27 @@ def projectile_drawer():
             mCircle(projectile[0], projectile[1], 5)
 
 def enemy_spawner():
-    global start_time, timer, current_state, enemy_coords, ground, enemy_max, enemy_count, boss_alive, difficulty, difficulty_select, boss_poise
+    global start_time, timer, current_state, enemy_coords, ground, enemy_max, enemy_count, boss_alive, difficulty, difficulty_select, boss_poise, player_x, player_y
     if (timer-start_time)%10 == 0:
         if enemy_count<enemy_max+difficulty[difficulty_select]:
             if current_state=='Level_3':
                 if points<1000:
                 # enemy_coords.append([rdm.randint(20, window_w-20), ground-100, rdm.randint(0,2)]) final code
-                    enemy_coords.append([rdm.randint(20, window_w-20), ground-40, rdm.randint(0,1)]) #test code
+                    spawn_coords = [rdm.randint(player_x-400, player_x+400), ground-40]
+                    if spawn_coords[0]>window_w:
+                        spawn_coords[0] = window_w
+                    elif spawn_coords[0]<0:
+                        spawn_coords[0] = 0
+                    enemy_coords.append([spawn_coords[0], spawn_coords[1], rdm.randint(0,1)]) #test code
                     enemy_count += 1
                 else:
                     if boss_alive==False:
-                        enemy_coords = [[window_w-100, ground-20, 2]]
+                        spawn_coords = [rdm.randint(player_x-400, player_x+400), ground-40]
+                        if spawn_coords[0]>window_w:
+                            spawn_coords[0] = window_w
+                        elif spawn_coords[0]<0:
+                            spawn_coords[0] = 0
+                        enemy_coords = [[spawn_coords[0], spawn_coords[1], 2]]
                         boss_alive = True
                         boss_poise = 500*difficulty[difficulty_select]
 
@@ -566,7 +576,7 @@ def enemy_collision():
         for coord in range(len(projectiles)):
             if projectiles[coord]!=None:
                 if player_dir == 0:
-                    if collision(player_x+25, player_x+50, player_y-100, player_y+100, projectiles[coord][0], projectiles[coord][0], projectiles[coord][1], enemy_coords[coord][1]):
+                    if collision(player_x+25, player_x+50, player_y-100, player_y+100, projectiles[coord][0], projectiles[coord][0], projectiles[coord][1], projectiles[coord][1]):
                         if player_stance==projectiles[coord][2]:
                             projectiles[coord] = None
                             points += 100
@@ -585,7 +595,6 @@ def enemy_collision():
         for coord in range(len(enemy_coords)):
             if enemy_coords[coord]!=None:
                 if collision(player_x-10, player_x+10, player_y-50, player_y+50, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
-                    print('test')
                     hit_point -= 1
         for coord in range(len(projectiles)):
             if projectiles[coord]!=None:
