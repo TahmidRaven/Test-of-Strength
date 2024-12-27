@@ -245,14 +245,22 @@ def fps_animation():
     max = 20
     if (1000/fps-(t1-t2)<=0):
         for move in range(len(move_queue)):
-            if move_queue[move] == False:
+            if move_queue[move] == 0:
                 move_acceleration -= move_speed
                 move_queue[move] = None
                 player_dir = 1
-            elif move_queue[move] == True:
+            elif move_queue[move] == 1:
                 move_acceleration += move_speed
                 move_queue[move] = None
                 player_dir = 0
+            elif move_queue[move] == 2:
+                if player_dir == 1:
+                    player_x -= 200
+                    move_queue[move] = None
+                else:
+                    player_x += 200
+                    move_queue[move] = None
+
         if move_acceleration>max:
             move_acceleration = max
         if move_acceleration<-max:
@@ -272,9 +280,9 @@ def fps_animation():
             player_y = ground
         if player_y==ground:
             player_state = 0
-            print('onground', player_state)
         
         t2=glutGet(GLUT_ELAPSED_TIME)
+
     
 
 
@@ -285,7 +293,6 @@ def animate():
 def keyboardListener(key, x, y):
     global pause, player_stance, game_over, move_queue, m_count, player_x, player_y, m_count, jump_acceleration, player_state
     #player state 0: walking, 1: jumping
-    
     if not pause and not game_over:
         # Stance changes
         if key == b'q':
@@ -306,15 +313,22 @@ def keyboardListener(key, x, y):
         # elif key == b's':  # Down
         #     player_y -= move_speed
         if key==b'a':
-            move_queue[m_count] = False
+            move_queue[m_count] = 0
             m_count += 1
             if m_count >= len(move_queue):
                 m_count = 0
         if key==b'd': 
-            move_queue[m_count] = True
+            move_queue[m_count] = 1
             m_count +=1
             if m_count >= len(move_queue):
                 m_count = 0
+        if key==b's':
+
+            move_queue[m_count] = 2
+            m_count +=1
+            if m_count >= len(move_queue):
+                m_count = 0
+
             
         # Keep player within window bounds
         player_x = max(0, min(window_w, player_x))
