@@ -9,57 +9,23 @@ difficulty = [0.5,1,2]
 difficulty_select = 1 #these are multipliers for difficulty, when you choose easy normal hard, just direct ei multiplier will be chosen 
 window_w, window_h = 720, 480
 fps, t1, t2 = 60, 0, 0
-player_stance, player_dir = 0, 0  # red is 0, green is 1, blue is 2, 0 is right, 1 is left
+player_stance, player_dir, player_state = 0, 0, 0  # red is 0, green is 1, blue is 2; dir left dir right = 1, 0; player state 0: walking, 1: jumping
+player_attack_state = 0 #0 neutral, 1 attack, 2 block
 pause = False
 move_queue = [None]*10
+jump_acceleration = 0
+move_acceleration = 0
+gravity, friction = 5, 5
 m_count = 0
 game_over = False
-player_arr = [[player_x, player_y, 10], [player_x, player_y-10, player_x, player_y-40], [player_x, player_y-20, player_x-15, player_y-30], [player_x-15, player_y-30, player_x-25, player_y-45],
-              [player_x, player_y-20, player_x+15, player_y-30], [player_x+15, player_y-30, player_x+25, player_y-45], [player_x, player_y-40, player_x-10, player_y-60], [player_x-10, player_y-60, player_x-15, player_y-80],
-              [player_x, player_y-40, player_x+10, player_y-60], [player_x+10, player_y-60, player_x+15, player_y-80], [player_x-25, player_y-45, 3], [player_x+25, player_y-45, 3], [player_x-15, player_y-80, 3],
-              [player_x+15, player_y-80, 3]]
-right_sword_arr = [[player_x+25, player_y-45, player_x+25, player_y-30], [player_x+25, player_y-30, player_x+30, player_y-30]
-]
 
-[player_x+25, player_y-30, player_x+30, player_y-30]
-    # Head
-    mCircle()
 
-    # Body
-    mLine(player_x, player_y-10, player_x, player_y-40)  # Center line1
-    
-    # Arms
-    mLine(player_x, player_y-20, player_x-15, player_y-30)  # Left upper arm1
-    mLine(player_x-15, player_y-30, player_x-25, player_y-45)   #1
-    mLine(player_x, player_y-20, player_x+15, player_y-30)  # Right upper arm1
-    mLine(player_x+15, player_y-30, player_x+25, player_y-45)  #1
-    
-    # Legs
-    mLine(player_x, player_y-40, player_x-10, player_y-60)  # Left upper leg1
-    mLine(player_x-10, player_y-60, player_x-15, player_y-80)  #1
-    mLine(player_x, player_y-40, player_x+10, player_y-60)  # Right upper leg1
-    mLine(player_x+10, player_y-60, player_x+15, player_y-80)   #1
-
-    # Hands and Feet
-    mCircle(player_x-25, player_y-45, 3)  # Left hand1
-    mCircle(player_x+25, player_y-45, 3)  #1
-    mCircle(player_x-15, player_y-80, 3)  # Left foot1
-    mCircle(player_x+15, player_y-80, 3)  #1
-
-    # Sword
-    mLine(player_x+25, player_y-45, player_x+25, player_y-30)  # Handle1
-    mLine(player_x+25, player_y-30, player_x+30, player_y-30)  # Cross guard
-    mLine(player_x+20, player_y-30, player_x+25, player_y-30)
-    mLine(player_x+25, player_y-30, player_x+25, player_y)  # Blade
-    mLine(player_x+20, player_y-30, player_x+20, player_y)
-    mLine(player_x+30, player_y-30, player_x+30, player_y)
-    mLine(player_x+20, player_y, player_x+25, player_y+10)  # Tip
-    mLine(player_x+30, player_y, player_x+25, player_y+10)
 
 # Player position and movement
 player_x = 360
 player_y = 240
-move_speed = 5
+ground = 240
+move_speed = 10
 
 def stanceColor(stance):
     if stance == 0:
@@ -192,7 +158,6 @@ def collision(x1_l, x1_r, y1_d, y1_u, x2_l, x2_r, y2_d, y2_u):
     #this might not work, be careful
     if x1_l<=x2_r and x1_r>=x2_l:
         if y1_d<=y2_u and y1_u>=y2_d:
-            print('collision')
             return True #collision
     return False
 
@@ -206,17 +171,62 @@ def iterate():
     glLoadIdentity()
 
 def display():
-    global player_x, player_y, player_stance, t1, window_h, window_w, player_arr
+    global player_x, player_y, player_stance, t1, window_h, window_w, player_dir, ground, player_state
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glClearColor(0, 0, 0, 0)
     glLoadIdentity()
     iterate()
     t1 = glutGet(GLUT_ELAPSED_TIME)
- 
-    stanceColor(player_stance)
+    
+    glColor3f(0.8,0.8,0.8)
+    # Head
+    mCircle(player_x, player_y, 10)
 
- 
+    # Body
+    mLine(player_x, player_y-10, player_x, player_y-40)  # Center line
+    
+    # Arms
+    mLine(player_x, player_y-20, player_x-15, player_y-30)  # Left upper arm
+    mLine(player_x-15, player_y-30, player_x-25, player_y-45)   
+    mLine(player_x, player_y-20, player_x+15, player_y-30)  # Right upper arm
+    mLine(player_x+15, player_y-30, player_x+25, player_y-45)  
+    
+    # Legs
+    mLine(player_x, player_y-40, player_x-10, player_y-60)  # Left upper leg
+    mLine(player_x-10, player_y-60, player_x-15, player_y-80)  
+    mLine(player_x, player_y-40, player_x+10, player_y-60)  # Right upper leg
+    mLine(player_x+10, player_y-60, player_x+15, player_y-80)   
+
+    # Hands and Feet
+    mCircle(player_x-25, player_y-45, 3)  # Left hand
+    mCircle(player_x+25, player_y-45, 3)  
+    mCircle(player_x-15, player_y-80, 3)  # Left foot
+    mCircle(player_x+15, player_y-80, 3)  
+
+    stanceColor(player_stance)
+    # Right Sword
+    if player_dir == 0:
+        mLine(player_x+25, player_y-45, player_x+25, player_y-30)  # Handle
+        mLine(player_x+25, player_y-30, player_x+30, player_y-30)  # Cross guard
+        mLine(player_x+20, player_y-30, player_x+25, player_y-30)
+        mLine(player_x+25, player_y-30, player_x+25, player_y)  # Blade
+        mLine(player_x+20, player_y-30, player_x+20, player_y)
+        mLine(player_x+30, player_y-30, player_x+30, player_y)
+        mLine(player_x+20, player_y, player_x+25, player_y+10)  # Tip
+        mLine(player_x+30, player_y, player_x+25, player_y+10)
+    else:
+        # Right Sword
+        mLine(player_x-25, player_y-45, player_x-25, player_y-30)  # Handle
+        mLine(player_x-25, player_y-30, player_x-30, player_y-30)  # Cross guard
+        mLine(player_x-20, player_y-30, player_x-25, player_y-30)
+        mLine(player_x-25, player_y-30, player_x-25, player_y)  # Blade
+        mLine(player_x-20, player_y-30, player_x-20, player_y)
+        mLine(player_x-30, player_y-30, player_x-30, player_y)
+        mLine(player_x-20, player_y, player_x-25, player_y+10)  # Tip
+        mLine(player_x-30, player_y, player_x-25, player_y+10)
+
+    #sets state to regular if on ground
 
     # test
     mCircle(window_w/2, window_h/2, 20)
@@ -231,15 +241,39 @@ def convert_coordinate(x,y):
     return real_x, real_y
 
 def fps_animation():
-    global move_queue, move_speed, player_x, player_y, t2
+    global move_queue, move_speed, player_x, player_y, t2, player_dir, jump_acceleration, gravity, ground, player_state, move_acceleration
+    max = 20
     if (1000/fps-(t1-t2)<=0):
         for move in range(len(move_queue)):
             if move_queue[move] == False:
-                player_x -= move_speed
+                move_acceleration -= move_speed
                 move_queue[move] = None
+                player_dir = 1
             elif move_queue[move] == True:
-                player_x += move_speed
+                move_acceleration += move_speed
                 move_queue[move] = None
+                player_dir = 0
+        if move_acceleration>max:
+            move_acceleration = max
+        if move_acceleration<-max:
+            move_acceleration = -max
+        player_x += move_acceleration
+        if move_acceleration>0:
+            move_acceleration -= friction
+        elif move_acceleration<0:
+            move_acceleration += friction
+        player_y+=jump_acceleration
+        if jump_acceleration>=0:
+            jump_acceleration-=gravity
+            print(jump_acceleration)
+        if player_y>ground:
+            player_y-=gravity
+        if player_y<ground:
+            player_y = ground
+        if player_y==ground:
+            player_state = 0
+            print('onground', player_state)
+        
         t2=glutGet(GLUT_ELAPSED_TIME)
     
 
@@ -249,7 +283,8 @@ def animate():
     glutPostRedisplay()
 
 def keyboardListener(key, x, y):
-    global pause, player_stance, game_over, move_queue, m_count, player_x, player_y, m_count
+    global pause, player_stance, game_over, move_queue, m_count, player_x, player_y, m_count, jump_acceleration, player_state
+    #player state 0: walking, 1: jumping
     
     if not pause and not game_over:
         # Stance changes
@@ -261,8 +296,13 @@ def keyboardListener(key, x, y):
             player_stance = 0  # Red/Hell stance
             
         # Movement
-        # elif key == b'w':  # Up
-        #     player_y += move_speed
+        elif key == b' ':
+            if player_state==0:
+                player_state = 1  # Up
+                jump_acceleration += 50
+                print('jumping', player_state)
+            else:
+                print('cant jump right now ')
         # elif key == b's':  # Down
         #     player_y -= move_speed
         if key==b'a':
@@ -277,8 +317,8 @@ def keyboardListener(key, x, y):
                 m_count = 0
             
         # Keep player within window bounds
-        player_x = max(50, min(window_w - 50, player_x))
-        player_y = max(100, min(window_h - 50, player_y))
+        player_x = max(0, min(window_w, player_x))
+        player_y = max(0, min(window_h, player_y))
     
     glutPostRedisplay()
 
