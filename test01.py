@@ -5,13 +5,56 @@ from OpenGL.GLU import *
 import random as rdm
 
 # Window and game state variables
+difficulty = [0.5,1,2]
+difficulty_select = 1 #these are multipliers for difficulty, when you choose easy normal hard, just direct ei multiplier will be chosen 
 window_w, window_h = 720, 480
 fps, t1, t2 = 60, 0, 0
-player_stance = 0  # red is 0, green is 1, blue is 2
+player_stance, player_dir = 0, 0  # red is 0, green is 1, blue is 2, 0 is right, 1 is left
 pause = False
 move_queue = [None]*10
 m_count = 0
 game_over = False
+player_arr = [[player_x, player_y, 10], [player_x, player_y-10, player_x, player_y-40], [player_x, player_y-20, player_x-15, player_y-30], [player_x-15, player_y-30, player_x-25, player_y-45],
+              [player_x, player_y-20, player_x+15, player_y-30], [player_x+15, player_y-30, player_x+25, player_y-45], [player_x, player_y-40, player_x-10, player_y-60], [player_x-10, player_y-60, player_x-15, player_y-80],
+              [player_x, player_y-40, player_x+10, player_y-60], [player_x+10, player_y-60, player_x+15, player_y-80], [player_x-25, player_y-45, 3], [player_x+25, player_y-45, 3], [player_x-15, player_y-80, 3],
+              [player_x+15, player_y-80, 3]]
+right_sword_arr = [[player_x+25, player_y-45, player_x+25, player_y-30], [player_x+25, player_y-30, player_x+30, player_y-30]
+]
+
+[player_x+25, player_y-30, player_x+30, player_y-30]
+    # Head
+    mCircle()
+
+    # Body
+    mLine(player_x, player_y-10, player_x, player_y-40)  # Center line1
+    
+    # Arms
+    mLine(player_x, player_y-20, player_x-15, player_y-30)  # Left upper arm1
+    mLine(player_x-15, player_y-30, player_x-25, player_y-45)   #1
+    mLine(player_x, player_y-20, player_x+15, player_y-30)  # Right upper arm1
+    mLine(player_x+15, player_y-30, player_x+25, player_y-45)  #1
+    
+    # Legs
+    mLine(player_x, player_y-40, player_x-10, player_y-60)  # Left upper leg1
+    mLine(player_x-10, player_y-60, player_x-15, player_y-80)  #1
+    mLine(player_x, player_y-40, player_x+10, player_y-60)  # Right upper leg1
+    mLine(player_x+10, player_y-60, player_x+15, player_y-80)   #1
+
+    # Hands and Feet
+    mCircle(player_x-25, player_y-45, 3)  # Left hand1
+    mCircle(player_x+25, player_y-45, 3)  #1
+    mCircle(player_x-15, player_y-80, 3)  # Left foot1
+    mCircle(player_x+15, player_y-80, 3)  #1
+
+    # Sword
+    mLine(player_x+25, player_y-45, player_x+25, player_y-30)  # Handle1
+    mLine(player_x+25, player_y-30, player_x+30, player_y-30)  # Cross guard
+    mLine(player_x+20, player_y-30, player_x+25, player_y-30)
+    mLine(player_x+25, player_y-30, player_x+25, player_y)  # Blade
+    mLine(player_x+20, player_y-30, player_x+20, player_y)
+    mLine(player_x+30, player_y-30, player_x+30, player_y)
+    mLine(player_x+20, player_y, player_x+25, player_y+10)  # Tip
+    mLine(player_x+30, player_y, player_x+25, player_y+10)
 
 # Player position and movement
 player_x = 360
@@ -163,7 +206,7 @@ def iterate():
     glLoadIdentity()
 
 def display():
-    global player_x, player_y, player_stance, t1, window_h, window_w
+    global player_x, player_y, player_stance, t1, window_h, window_w, player_arr
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glClearColor(0, 0, 0, 0)
@@ -174,39 +217,6 @@ def display():
     stanceColor(player_stance)
 
  
-    # Head
-    mCircle(player_x, player_y, 10)
-
-    # Body
-    mLine(player_x, player_y-10, player_x, player_y-40)  # Center line
-    
-    # Arms
-    mLine(player_x, player_y-20, player_x-15, player_y-30)  # Left upper arm
-    mLine(player_x-15, player_y-30, player_x-25, player_y-45)   
-    mLine(player_x, player_y-20, player_x+15, player_y-30)  # Right upper arm
-    mLine(player_x+15, player_y-30, player_x+25, player_y-45)  
-    
-    # Legs
-    mLine(player_x, player_y-40, player_x-10, player_y-60)  # Left upper leg
-    mLine(player_x-10, player_y-60, player_x-15, player_y-80)  
-    mLine(player_x, player_y-40, player_x+10, player_y-60)  # Right upper leg
-    mLine(player_x+10, player_y-60, player_x+15, player_y-80)   
-
-    # Hands and Feet
-    mCircle(player_x-25, player_y-45, 3)  # Left hand
-    mCircle(player_x+25, player_y-45, 3)  
-    mCircle(player_x-15, player_y-80, 3)  # Left foot
-    mCircle(player_x+15, player_y-80, 3)  
-
-    # Sword
-    mLine(player_x+25, player_y-45, player_x+25, player_y-30)  # Handle
-    mLine(player_x+25, player_y-30, player_x+30, player_y-30)  # Cross guard
-    mLine(player_x+20, player_y-30, player_x+25, player_y-30)
-    mLine(player_x+25, player_y-30, player_x+25, player_y)  # Blade
-    mLine(player_x+20, player_y-30, player_x+20, player_y)
-    mLine(player_x+30, player_y-30, player_x+30, player_y)
-    mLine(player_x+20, player_y, player_x+25, player_y+10)  # Tip
-    mLine(player_x+30, player_y, player_x+25, player_y+10)
 
     # test
     mCircle(window_w/2, window_h/2, 20)
