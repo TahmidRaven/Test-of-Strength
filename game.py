@@ -31,7 +31,8 @@ projectiles = [] #x,y, color and direction
 victory = False
 game_over = False
 last_hit = 0
-
+last_boss_hit = 0
+player_hit_flash, enemy_hit_flash, parry_flash = False, False, False
 
 game_state = ["Title", "Level_1", "Level_2", "Level_3"]
 current_state = game_state[0]
@@ -54,11 +55,20 @@ def stanceColor(stance):
         return [0, 0, 1]
 
 def losehp():
-    global hit_point, last_hit
+    global hit_point, last_hit, player_hit_flash
     current_time = glutGet(GLUT_ELAPSED_TIME)
     if current_time - last_hit >= 3000:
         hit_point -= 1
         last_hit = current_time
+        player_hit_flash = True
+
+def losepoise():
+    global boss_poise, last_boss_hit, enemy_hit_flash
+    current_time = glutGet(GLUT_ELAPSED_TIME)
+    if current_time - last_boss_hit >= 2000:
+        boss_poise -= 50
+        last_boss_hit = current_time
+        enemy_hit_flash = True
 
 
 
@@ -306,22 +316,36 @@ def knight_shoot():
         knight_last_shot = current_time
 
 def witch_shoot(witch):
-    global witch_last_shot, projectiles, player_x
+    global witch_last_shot, projectiles, player_x, boss_alive
     current_time = glutGet(GLUT_ELAPSED_TIME)
     #x,y, color and direction 1 = right, 0 = left
-    if current_time - witch_last_shot >= 4000:
-        if witch[0]>player_x:
-            projectiles.append([witch[0], witch[1], rdm.randint(0,2), 0])
-        else:
-            projectiles.append([witch[0], witch[1], rdm.randint(0,2), 1])
-        witch_last_shot = current_time
+    if boss_alive == False:
+        if current_time - witch_last_shot >= 4000:
+            if witch[0]>player_x:
+                projectiles.append([witch[0], witch[1], rdm.randint(0,2), 0])
+            else:
+                projectiles.append([witch[0], witch[1], rdm.randint(0,2), 1])
+            witch_last_shot = current_time
+    else:
+        if current_time - witch_last_shot >= 3000:
+            if witch[0]>player_x:
+                projectiles.append([witch[0], witch[1], rdm.randint(0,2), 0])
+            else:
+                projectiles.append([witch[0], witch[1], rdm.randint(0,2), 1])
+            witch_last_shot = current_time
 
 def goblin_move(goblin):
-    global player_x
-    if goblin[0]>player_x:
-        goblin[0] -= 1
+    global player_x, boss_alive
+    if boss_alive==False:
+        if goblin[0]>player_x:
+            goblin[0] -= 1
+        else:
+            goblin[0] += 1
     else:
-        goblin[0] += 1
+        if goblin[0]>player_x:
+            goblin[0] -= 3
+        else:
+            goblin[0] += 3
 
 def iterate():
     global window_h, window_w
@@ -334,10 +358,23 @@ def iterate():
 
 def display():
     #unfortunately, everything is displayed here
-    global player_x, player_y, player_stance, t1, window_h, window_w, player_dir, ground, player_state, player_attack_state, points, hit_point, current_state, timer, boss_poise
+    global player_x, player_y, player_stance, t1, window_h, window_w, player_dir, ground, player_state, player_attack_state, points, hit_point, current_state, timer, boss_poise, player_hit_flash, parry_flash, enemy_hit_flash
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glClearColor(0, 0, 0, 0)
+    if player_hit_flash:
+        glClearColor(0.2, 0, 0, 0)
+        player_hit_flash = False
+    elif parry_flash:
+        if player_stance == 1:
+            glClearColor(0, 0.2, 0, 0)
+        else:
+            glClearColor(0, 0, 0.2, 0)
+        parry_flash = False
+    elif enemy_hit_flash:
+        glClearColor(0.2,0.2,0.2,0)
+        enemy_hit_flash = False
+    else:
+        glClearColor(0, 0, 0, 0)
     glLoadIdentity()
     iterate()
     t1 = glutGet(GLUT_ELAPSED_TIME)
@@ -511,7 +548,7 @@ def enemy_spawner():
                     enemy_count += 1
                 else:
                     if boss_alive==False:
-                        spawn_coords = [rdm.randint(player_x-400, player_x+400), ground-40]
+                        spawn_coords = [rdm.randint(player_x-400, player_x+400), ground-20]
                         if spawn_coords[0]>window_w:
                             spawn_coords[0] = window_w
                         elif spawn_coords[0]<0:
@@ -535,7 +572,7 @@ def enemy_drawer():
 
 
 def enemy_collision():
-    global enemy_coords, player_attack_state, player_x, player_y, points, player_dir,enemy_count,boss_alive, boss_poise, current_state, projectiles, player_stance, hit_point
+    global enemy_coords, player_attack_state, player_x, player_y, points, player_dir,enemy_count,boss_alive, boss_poise, current_state, projectiles, player_stance, hit_point, parry_flash, enemy_hit_flash
     if player_attack_state == 1:
         if boss_alive==False:
             for coord in range(len(enemy_coords)):
@@ -547,21 +584,23 @@ def enemy_collision():
                             enemy_coords[coord] = None
                             points += 100
                             enemy_count-=1
+                            enemy_hit_flash = True
                     else:
                         if collision(player_x-80, player_x-25, player_y-50, player_y-40, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
                             enemy_coords[coord] = None
                             points += 100
                             enemy_count-=1
+                            enemy_hit_flash = True
         else:
             # print(player_x+25, player_x+80, player_y-50, player_y-40, enemy_coords[0][0], enemy_coords[0][0], enemy_coords[0][1], enemy_coords[0][1])
-            if collision(player_x+10, player_x-10, player_y-50, player_y+50, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
+            if collision(player_x-10, player_x+10, player_y-50, player_y+50, enemy_coords[0][0], enemy_coords[0][0], enemy_coords[0][1], enemy_coords[0][1]):
                 losehp()
             if player_dir == 0:
                 if collision(player_x+25, player_x+80, player_y-50, player_y-40, enemy_coords[0][0]-20, enemy_coords[0][0]+20, enemy_coords[0][1]-100, enemy_coords[0][1]+200):
-                    print('?')
                     if boss_poise>0:
-                        boss_poise -= 50
+                        losepoise()
                     else:
+                        enemy_hit_flash = True
                         enemy_coords[0] = None
                         boss_alive = False
                         current_state = "Title"
@@ -569,10 +608,12 @@ def enemy_collision():
                 if collision(player_x-80, player_x-25, player_y-50, player_y-40, enemy_coords[0][0]-20, enemy_coords[0][0]+20, enemy_coords[0][1]-100, enemy_coords[0][1]+200):
                     # print('??')
                     if boss_poise>0:
-                        boss_poise -= 50
+                        losepoise()
                     else:
+                        enemy_hit_flash = True
                         enemy_coords[0] = None
                         boss_alive = False
+                        print('You win!')
                         current_state = "Title"
     if player_attack_state == 2:
         for coord in range(len(enemy_coords)):
@@ -587,6 +628,7 @@ def enemy_collision():
                             projectiles[coord] = None
                             points += 100
                             hit_point+=1
+                            parry_flash = True
                         else:
                             losehp()
                 else:
@@ -595,6 +637,7 @@ def enemy_collision():
                             projectiles[coord] = None
                             points += 100
                             hit_point+=1
+                            parry_flash = True
                         else:
                             losehp()
     if player_attack_state == 0:
