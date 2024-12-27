@@ -14,6 +14,7 @@ player_stance, player_dir, player_state = 1, 0, 0  # red is 0, green is 1, blue 
 player_attack_state = 0 #0 neutral, 1 attack, 2 block
 pause = False
 move_queue = [None]*10
+enemy_coords = []
 jump_acceleration = 0
 move_acceleration = 0
 gravity, friction = 5, 5
@@ -21,6 +22,10 @@ m_count = 0
 game_over = False
 points = 0
 hit_point = 5
+boss_poise = 0
+start_time, timer = 0, 0
+enemy_max, enemy_count = 2, 0
+
 
 game_state = ["Title", "Level_1", "Level_2", "Level_3"]
 current_state = game_state[0]
@@ -43,14 +48,6 @@ def stanceColor(stance):
         return [0, 0, 1]
 
 
-def level_1():
-    pass
-
-def level_2():
-    pass
-
-def level_3():
-    pass
 
 
 def findZone(dy, dx):
@@ -164,26 +161,26 @@ def mTriangle(x1, y1, x2, y2, x3, y3):
     mLine(x2, y2, x3, y3)
     mLine(x3, y3, x1, y1)
     
-    min_x = min(x1, x2, x3)
-    max_x = max(x1, x2, x3)
-    min_y = min(y1, y2, y3)
-    max_y = max(y1, y2, y3)
+    # min_x = min(x1, x2, x3)
+    # max_x = max(x1, x2, x3)
+    # min_y = min(y1, y2, y3)
+    # max_y = max(y1, y2, y3)
     
-    # Scan each row
-    for y in range(int(min_y), int(max_y) + 1):
-        for x in range(int(min_x), int(max_x) + 1):
+    # # Scan each row
+    # for y in range(int(min_y), int(max_y) + 1):
+    #     for x in range(int(min_x), int(max_x) + 1):
        
-            d1 = (x2 - x1) * (y - y1) - (y2 - y1) * (x - x1)
-            d2 = (x3 - x2) * (y - y2) - (y3 - y2) * (x - x2)
-            d3 = (x1 - x3) * (y - y3) - (y1 - y3) * (x - x3)
+    #         d1 = (x2 - x1) * (y - y1) - (y2 - y1) * (x - x1)
+    #         d2 = (x3 - x2) * (y - y2) - (y3 - y2) * (x - x2)
+    #         d3 = (x1 - x3) * (y - y3) - (y1 - y3) * (x - x3)
             
-            has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
-            has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
+    #         has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
+    #         has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
             
-            if not (has_neg and has_pos):
-                glBegin(GL_POINTS)
-                glVertex2f(x, y)
-                glEnd()
+    #         if not (has_neg and has_pos):
+    #             glBegin(GL_POINTS)
+    #             glVertex2f(x, y)
+    #             glEnd()
 
 def circlePoints(x,y,cx,cy):
     glBegin(GL_POINTS)
@@ -227,6 +224,63 @@ def draw_witch(x, y):
     mLine(x - 15, y - 20, x - 25, y - 10)  # Left arm
     mLine(x + 15, y - 20, x + 25, y - 10)  # Right arm
 
+def draw_knight_boss(x, y):
+    head_radius = 12
+    glColor3f(0.7, 0.7, 0.7)
+    mCircle(x, y, head_radius)
+    mLine(x - head_radius, y, x + head_radius, y)
+    mLine(x, y + head_radius, x, y + head_radius + 5)
+    mLine(x - 20, y - head_radius, x + 20, y - head_radius)
+    mLine(x - 20, y - head_radius, x - 25, y - 45)
+    mLine(x + 20, y - head_radius, x + 25, y - 45)
+    mLine(x - 25, y - 45, x + 25, y - 45)
+    mCircle(x - 20, y - head_radius - 5, 8)
+    mCircle(x + 20, y - head_radius - 5, 8)
+    mLine(x - 20, y - 25, x - 30, y - 40)
+    mLine(x - 21, y - 25, x - 31, y - 40)
+    mLine(x + 20, y - 25, x + 35, y - 35)
+    mLine(x + 21, y - 25, x + 36, y - 35)
+    mLine(x - 15, y - 45, x - 20, y - 70)
+    mLine(x - 14, y - 45, x - 19, y - 70)
+    mCircle(x - 20, y - 70, 5)
+    mLine(x + 15, y - 45, x + 20, y - 70)
+    mLine(x + 14, y - 45, x + 19, y - 70)
+    mCircle(x + 20, y - 70, 5)
+    mTriangle(x - 30, y - 40, x - 40, y - 35, x - 35, y - 55)
+    mLine(x - 35, y - 40, x - 35, y - 50)
+    mLine(x - 33, y - 45, x - 37, y - 45)
+    mLine(x + 35, y - 35, x + 35, y - 25)
+    mLine(x + 30, y - 25, x + 40, y - 25)
+    mLine(x + 35, y - 25, x + 35, y + 5)
+    mLine(x + 33, y - 25, x + 33, y + 3)
+    mLine(x + 37, y - 25, x + 37, y + 3)
+    mTriangle(x + 33, y + 3, x + 37, y + 3, x + 35, y + 8)
+
+def draw_goblin(x, y):
+ 
+    glColor3f(0.8, 0.2, 0.2)  # Bright red 
+    
+    # Head 
+    head_radius = 5  
+    mCircle(x, y, head_radius)
+    # Body  
+    mLine(x, y - head_radius, x, y - 20)  # Main body
+     # Arms  
+    mLine(x, y - 10, x - 8, y - 18)  # Left arm
+    mLine(x, y - 10, x + 8, y - 18)  
+    
+    # Little claws 
+    mCircle(x - 8, y - 18, 2)  # Left hand
+    mCircle(x + 8, y - 18, 2)   
+    # Legs 
+    mLine(x, y - 20, x - 5, y - 35)  # Left leg
+    mLine(x, y - 20, x + 5, y - 35)  
+   # Feet
+    mCircle(x - 5, y - 35, 2)  # Left foot
+    mCircle(x + 5, y - 35, 2)   
+   # pointy ears 
+    mTriangle(x - 5, y, x - 8, y + 5, x - 2, y + 2)  # Left ear
+    mTriangle(x + 5, y, x + 8, y + 5, x + 2, y + 2)
 
 def iterate():
     global window_h, window_w
@@ -239,13 +293,14 @@ def iterate():
 
 def display():
     #unfortunately, everything is displayed here
-    global player_x, player_y, player_stance, t1, window_h, window_w, player_dir, ground, player_state, player_attack_state, points, hit_point, current_state
+    global player_x, player_y, player_stance, t1, window_h, window_w, player_dir, ground, player_state, player_attack_state, points, hit_point, current_state, timer
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glClearColor(0, 0, 0, 0)
     glLoadIdentity()
     iterate()
     t1 = glutGet(GLUT_ELAPSED_TIME)
+    timer = glutGet(GLUT_ELAPSED_TIME)
     
  
     
@@ -317,7 +372,7 @@ def display():
                 mLine(player_x+43, player_y+10, player_x+48, player_y-7)
         else:
             if player_attack_state == 2:
-            # Right Sword
+            # Left Sword
                 mLine(player_x-25, player_y-45, player_x-25, player_y-30)  # Handle
                 mLine(player_x-25, player_y-30, player_x-30, player_y-30)  # Cross guard
                 mLine(player_x-20, player_y-30, player_x-25, player_y-30)
@@ -344,6 +399,8 @@ def display():
                 mLine(player_x-35, player_y-35, player_x-48, player_y-5)
                 mLine(player_x-35, player_y, player_x-43, player_y+10)  # Tip
                 mLine(player_x-43, player_y+10, player_x-48, player_y-7)
+
+
     else:
         glColor3f(0.5,0.5,0.5)
         glRasterPos2f(window_w/2-80,window_h-50)
@@ -376,14 +433,52 @@ def display():
     #sets state to regular if on ground
 
     # test
+    enemy_spawner()
+    enemy_drawer()
+    enemy_collision()
 
     glutSwapBuffers()
 
-def convert_coordinate(x,y):
-    global window_w, window_h
-    real_x = x - (window_w/2)
-    real_y = (window_h/2) - y
-    return real_x, real_y
+
+def enemy_spawner():
+    global start_time, timer, current_state, enemy_coords, ground, enemy_max, enemy_count
+    if (timer-start_time)%10 == 0:
+        if enemy_count<enemy_max:
+            if current_state=='Level_3':
+                # enemy_coords.append([rdm.randint(20, window_w-20), ground-100, rdm.randint(0,2)]) final code
+                enemy_coords.append([rdm.randint(20, window_w-20), ground-40, rdm.randint(0,1)]) #test code
+                enemy_count += 1
+                print(enemy_count, enemy_coords)
+                print('??')
+
+def enemy_drawer():
+    global enemy_coords
+    for coord in enemy_coords:
+        if coord!=None:
+            if coord[2] == 1:
+                draw_witch(coord[0], coord[1])
+            elif coord[2] == 0:
+                draw_goblin(coord[0], coord[1])
+
+
+def enemy_collision():
+    global enemy_coords, player_attack_state, player_x, player_y, points, player_dir,enemy_count
+    if player_attack_state == 1:
+        for coord in range(len(enemy_coords)):
+            if enemy_coords[coord]!=None:
+                if player_dir == 0:
+                    if collision(player_x+25, player_x+80, player_y-50, player_y-40, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
+                        enemy_coords[coord] = None
+                        points += 100
+                        enemy_count-=1
+                else:
+                    if collision(player_x-80, player_x-25, player_y-50, player_y-40, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
+                        enemy_coords[coord] = None
+                        points += 100
+                        enemy_count-=1
+
+
+
 
 def fps_animation():
     global move_queue, move_speed, player_x, player_y, t2, player_dir, jump_acceleration, gravity, ground, player_state, move_acceleration
@@ -481,7 +576,7 @@ def keyboardListener(key, x, y):
     glutPostRedisplay()
 
 def mouseListener(button, state, x, y):
-    global player_attack_state, current_state, window_w, window_h, game_state, difficulty_select
+    global player_attack_state, current_state, window_w, window_h, game_state, difficulty_select, start_time
     if current_state!="Title":
         if button==GLUT_LEFT_BUTTON:
             if state==GLUT_DOWN:
@@ -496,9 +591,11 @@ def mouseListener(button, state, x, y):
     else:
         if button==GLUT_LEFT_BUTTON:
             if state==GLUT_DOWN:
+                start_time = glutGet(GLUT_ELAPSED_TIME)
                 # print(x,x,y,y)
-                if collision(x,x,y,y,window_w/2-80, window_w/2, 150, 200): #start game
-                    current_state=game_state[1]
+                if collision(x,x,y,y,window_w/2-80, window_w/2, 150, 200): #start game game_state = ["Title", "Level_1", "Level_2", "Level_3"]
+                    # current_state=game_state[1]
+                    current_state = game_state[3]
                 if collision(x,x,y,y,230, 300, 300, 340): #easy
                     difficulty_select=0
                     print('easy')
