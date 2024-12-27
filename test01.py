@@ -1,7 +1,7 @@
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
-from OpenGL.GLUT.fonts import GLUT_BITMAP_TIMES_ROMAN_24, GLUT_BITMAP_TIMES_ROMAN_10 
+from OpenGL.GLUT.fonts import GLUT_BITMAP_TIMES_ROMAN_24,  GLUT_BITMAP_HELVETICA_18  
 # import numpy
 import random as rdm
 
@@ -25,6 +25,8 @@ hit_point = 5
 boss_poise = 0
 start_time, timer = 0, 0
 enemy_max, enemy_count = 2, 0
+
+boss_alive = False
 
 
 game_state = ["Title", "Level_1", "Level_2", "Level_3"]
@@ -414,13 +416,13 @@ def display():
             glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, ord(letter))
         glRasterPos2f(window_w/2-100,150)
         for letter in easy:
-            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, ord(letter))
+            glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18 , ord(letter))
         glRasterPos2f(window_w/2,150)
         for letter in normal:
-            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, ord(letter))
+            glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18 , ord(letter))
         glRasterPos2f(window_w/2+100,150)
         for letter in hard:
-            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, ord(letter))
+            glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18 , ord(letter))
         glRasterPos2f(window_w/2-80,300)
         for letter in start:
             glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, ord(letter))   
@@ -441,24 +443,32 @@ def display():
 
 
 def enemy_spawner():
-    global start_time, timer, current_state, enemy_coords, ground, enemy_max, enemy_count
+    global start_time, timer, current_state, enemy_coords, ground, enemy_max, enemy_count, boss_alive
     if (timer-start_time)%10 == 0:
         if enemy_count<enemy_max:
             if current_state=='Level_3':
+                if points<1000:
                 # enemy_coords.append([rdm.randint(20, window_w-20), ground-100, rdm.randint(0,2)]) final code
-                enemy_coords.append([rdm.randint(20, window_w-20), ground-40, rdm.randint(0,1)]) #test code
-                enemy_count += 1
-                print(enemy_count, enemy_coords)
-                print('??')
+                    enemy_coords.append([rdm.randint(20, window_w-20), ground-40, rdm.randint(0,1)]) #test code
+                    enemy_count += 1
+                    print(enemy_count, enemy_coords)
+                    print('??')
+                else:
+                    enemy_coords = [[window_w-100, ground-40, 2]]
+                    boss_alive = True
 
 def enemy_drawer():
-    global enemy_coords
-    for coord in enemy_coords:
-        if coord!=None:
-            if coord[2] == 1:
-                draw_witch(coord[0], coord[1])
-            elif coord[2] == 0:
-                draw_goblin(coord[0], coord[1])
+    global enemy_coords, current_state
+    if boss_alive==True:
+        if current_state == 'Level_3':
+            draw_knight_boss(enemy_coords[0][0],enemy_coords[0][1])
+    else:
+        for coord in enemy_coords:
+            if coord!=None:
+                if coord[2] == 1:
+                    draw_witch(coord[0], coord[1])
+                elif coord[2] == 0:
+                    draw_goblin(coord[0], coord[1])
 
 
 def enemy_collision():
