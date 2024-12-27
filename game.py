@@ -591,7 +591,7 @@ def enemy_collision():
             if projectiles[coord]!=None:
                 # print(player_x+10, player_x-10, player_y-50, player_y+50, projectiles[coord][0], projectiles[coord][0], projectiles[coord][1], enemy_coords[coord][1])
                 if player_dir == 0:
-                    if collision(player_x-10, player_x+10, player_y-50, player_y+50, projectiles[coord][0], projectiles[coord][0], projectiles[coord][1], enemy_coords[coord][1]):
+                    if collision(player_x-10, player_x+10, player_y-50, player_y+50, projectiles[coord][0], projectiles[coord][0], projectiles[coord][1], projectiles[coord][1]):
                             hit_point-=1
                 else:
                     if collision(player_x-10, player_x+10, player_y-50, player_y+50, projectiles[coord][0], projectiles[coord][0], projectiles[coord][1], projectiles[coord][1]):
