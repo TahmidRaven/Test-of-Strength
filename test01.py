@@ -28,6 +28,8 @@ enemy_max, enemy_count = 1, 0
 knight_last_shot, witch_last_shot = 0, 0
 boss_alive = False
 projectiles = [] #x,y, color and direction
+victory = False
+game_over = False
 
 
 
@@ -496,8 +498,6 @@ def enemy_spawner():
                 # enemy_coords.append([rdm.randint(20, window_w-20), ground-100, rdm.randint(0,2)]) final code
                     enemy_coords.append([rdm.randint(20, window_w-20), ground-40, rdm.randint(0,1)]) #test code
                     enemy_count += 1
-                    print(enemy_count, enemy_coords)
-                    print('??')
                 else:
                     if boss_alive==False:
                         enemy_coords = [[window_w-100, ground-20, 2]]
@@ -519,11 +519,13 @@ def enemy_drawer():
 
 
 def enemy_collision():
-    global enemy_coords, player_attack_state, player_x, player_y, points, player_dir,enemy_count,boss_alive, boss_poise
+    global enemy_coords, player_attack_state, player_x, player_y, points, player_dir,enemy_count,boss_alive, boss_poise, current_state, projectiles, player_stance, hit_point
     if player_attack_state == 1:
         if boss_alive==False:
             for coord in range(len(enemy_coords)):
                 if enemy_coords[coord]!=None:
+                    if collision(player_x+10, player_x-10, player_y-50, player_y+50, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
+                        hit_point -= 1
                     if player_dir == 0:
                         if collision(player_x+25, player_x+80, player_y-50, player_y-40, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
                             enemy_coords[coord] = None
@@ -535,7 +537,9 @@ def enemy_collision():
                             points += 100
                             enemy_count-=1
         else:
-            print(player_x+25, player_x+80, player_y-50, player_y-40, enemy_coords[0][0], enemy_coords[0][0], enemy_coords[0][1], enemy_coords[0][1])
+            # print(player_x+25, player_x+80, player_y-50, player_y-40, enemy_coords[0][0], enemy_coords[0][0], enemy_coords[0][1], enemy_coords[0][1])
+            if collision(player_x+10, player_x-10, player_y-50, player_y+50, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
+                hit_point -= 1
             if player_dir == 0:
                 if collision(player_x+25, player_x+80, player_y-50, player_y-40, enemy_coords[0][0]-20, enemy_coords[0][0]+20, enemy_coords[0][1]-100, enemy_coords[0][1]+200):
                     print('?')
@@ -544,14 +548,59 @@ def enemy_collision():
                     else:
                         enemy_coords[0] = None
                         boss_alive = False
+                        current_state = "Title"
             else:
                 if collision(player_x-80, player_x-25, player_y-50, player_y-40, enemy_coords[0][0]-20, enemy_coords[0][0]+20, enemy_coords[0][1]-100, enemy_coords[0][1]+200):
-                    print('??')
+                    # print('??')
                     if boss_poise>0:
                         boss_poise -= 50
                     else:
                         enemy_coords[0] = None
                         boss_alive = False
+                        current_state = "Title"
+    if player_attack_state == 2:
+        for coord in range(len(enemy_coords)):
+            if enemy_coords[coord]!=None:
+                if collision(player_x+10, player_x-10, player_y-50, player_y+50, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
+                    hit_point -= 1
+        for coord in range(len(projectiles)):
+            if projectiles[coord]!=None:
+                if player_dir == 0:
+                    if collision(player_x+25, player_x+50, player_y-100, player_y+100, projectiles[coord][0], projectiles[coord][0], projectiles[coord][1], enemy_coords[coord][1]):
+                        if player_stance==projectiles[coord][2]:
+                            projectiles[coord] = None
+                            points += 100
+                            hit_point+=1
+                        else:
+                            hit_point-=1
+                else:
+                    if collision(player_x-50, player_x-25, player_y-100, player_y+100, projectiles[coord][0], projectiles[coord][0], projectiles[coord][1], projectiles[coord][1]):
+                        if player_stance==projectiles[coord][2]:
+                            projectiles[coord] = None
+                            points += 100
+                            hit_point+=1
+                        else:
+                            hit_point-=1
+    if player_attack_state == 0:
+        for coord in range(len(enemy_coords)):
+            if enemy_coords[coord]!=None:
+                if collision(player_x-10, player_x+10, player_y-50, player_y+50, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
+                    print('test')
+                    hit_point -= 1
+        for coord in range(len(projectiles)):
+            if projectiles[coord]!=None:
+                # print(player_x+10, player_x-10, player_y-50, player_y+50, projectiles[coord][0], projectiles[coord][0], projectiles[coord][1], enemy_coords[coord][1])
+                if player_dir == 0:
+                    if collision(player_x-10, player_x+10, player_y-50, player_y+50, projectiles[coord][0], projectiles[coord][0], projectiles[coord][1], enemy_coords[coord][1]):
+                            hit_point-=1
+                else:
+                    if collision(player_x-10, player_x+10, player_y-50, player_y+50, projectiles[coord][0], projectiles[coord][0], projectiles[coord][1], projectiles[coord][1]):
+                            hit_point-=1
+    if hit_point<=0:
+        print('Game Over')
+        glutLeaveMainLoop()
+
+
             
 
 def projectile_animation():
@@ -596,6 +645,12 @@ def fps_animation():
                         goblin_move(enemy)
                     elif enemy[2] == 1:
                         witch_shoot(enemy)
+        else:
+            if enemy_coords[0]!=None:
+                if rdm.randint(0,1)==0:
+                    goblin_move(enemy_coords[0])
+                else:
+                    witch_shoot(enemy_coords[0])
         if move_acceleration>max:
             move_acceleration = max
         if move_acceleration<-max:
@@ -608,7 +663,6 @@ def fps_animation():
         player_y+=jump_acceleration
         if jump_acceleration>=0:
             jump_acceleration-=gravity
-            print(jump_acceleration)
         if player_y>ground:
             player_y-=gravity
         if player_y<ground:
@@ -642,7 +696,6 @@ def keyboardListener(key, x, y):
             if player_state==0:
                 player_state = 1  # Up
                 jump_acceleration += 50
-                print('jumping', player_state)
             else:
                 print('cant jump right now ')
         # elif key == b's':  # Down
