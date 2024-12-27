@@ -1,7 +1,6 @@
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
-import numpy
 import random as rdm #might not need this   
 
 window_w, window_h = 720, 480
@@ -23,6 +22,14 @@ def stanceColor(stance):
         print('heaven')
         return [0,0,1]
 
+def collision(x1_l, x1_r, y1_d, y1_u, x2_l, x2_r, y2_d, y2_u):
+    #this might not work, be careful
+    if x1_l>=x2_r and x1_r<=x2_l:
+        print('x collision')
+        if y1_d>=y2_u and y1_u<=y2_d:
+            print('y collision')
+            return True #collision
+    return False
 
 def findZone(dy, dx):
     if dy>=0 and dx>=0:

@@ -1,7 +1,7 @@
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
-import numpy
+# import numpy
 import random as rdm
 
 # Window and game state variables
@@ -145,6 +145,14 @@ def circlePoints(x,y,cx,cy):
     glVertex2f(-x+cx,y+cy)
     glEnd()
 
+def collision(x1_l, x1_r, y1_d, y1_u, x2_l, x2_r, y2_d, y2_u):
+    #this might not work, be careful
+    if x1_l<=x2_r and x1_r>=x2_l:
+        if y1_d<=y2_u and y1_u>=y2_d:
+            print('collision')
+            return True #collision
+    return False
+
 def iterate():
     global window_h, window_w
     glViewport(0, 0, window_w, window_h)
@@ -155,13 +163,13 @@ def iterate():
     glLoadIdentity()
 
 def display():
-    global player_x, player_y, player_stance
+    global player_x, player_y, player_stance, t1, window_h, window_w
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glClearColor(0, 0, 0, 0)
     glLoadIdentity()
     iterate()
-
+    t1 = glutGet(GLUT_ELAPSED_TIME)
  
     stanceColor(player_stance)
 
@@ -200,6 +208,10 @@ def display():
     mLine(player_x+20, player_y, player_x+25, player_y+10)  # Tip
     mLine(player_x+30, player_y, player_x+25, player_y+10)
 
+    # test
+    mCircle(window_w/2, window_h/2, 20)
+    collision(player_x-100, player_x+100, player_y-80, player_y+80, window_w/2-50, window_w/2+50, window_h/2-50, window_h/2+50)
+
     glutSwapBuffers()
 
 def convert_coordinate(x,y):
@@ -208,8 +220,26 @@ def convert_coordinate(x,y):
     real_y = (window_h/2) - y
     return real_x, real_y
 
+def fps_animation():
+    global move_queue, move_speed, player_x, player_y, t2
+    if (1000/fps-(t1-t2)<=0):
+        for move in range(len(move_queue)):
+            if move_queue[move] == False:
+                player_x -= move_speed
+                move_queue[move] = None
+            elif move_queue[move] == True:
+                player_x += move_speed
+                move_queue[move] = None
+        t2=glutGet(GLUT_ELAPSED_TIME)
+    
+
+
+def animate():
+    fps_animation()
+    glutPostRedisplay()
+
 def keyboardListener(key, x, y):
-    global pause, player_stance, game_over, move_queue, m_count, player_x, player_y
+    global pause, player_stance, game_over, move_queue, m_count, player_x, player_y, m_count
     
     if not pause and not game_over:
         # Stance changes
@@ -221,14 +251,20 @@ def keyboardListener(key, x, y):
             player_stance = 0  # Red/Hell stance
             
         # Movement
-        elif key == b'w':  # Up
-            player_y += move_speed
-        elif key == b's':  # Down
-            player_y -= move_speed
-        elif key == b'a':  # Left
-            player_x -= move_speed
-        elif key == b'd':  # Right
-            player_x += move_speed
+        # elif key == b'w':  # Up
+        #     player_y += move_speed
+        # elif key == b's':  # Down
+        #     player_y -= move_speed
+        if key==b'a':
+            move_queue[m_count] = False
+            m_count += 1
+            if m_count >= len(move_queue):
+                m_count = 0
+        if key==b'd': 
+            move_queue[m_count] = True
+            m_count +=1
+            if m_count >= len(move_queue):
+                m_count = 0
             
         # Keep player within window bounds
         player_x = max(50, min(window_w - 50, player_x))
@@ -252,6 +288,7 @@ window = glutCreateWindow(b"Test of Strength")
 init()
 
 glutDisplayFunc(display)
+glutIdleFunc(animate)
 glutKeyboardFunc(keyboardListener)
 
 glutMainLoop()
