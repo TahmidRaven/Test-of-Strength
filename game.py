@@ -30,7 +30,7 @@ boss_alive = False
 projectiles = [] #x,y, color and direction
 victory = False
 game_over = False
-
+last_hit = 0
 
 
 game_state = ["Title", "Level_1", "Level_2", "Level_3"]
@@ -53,6 +53,12 @@ def stanceColor(stance):
         glColor3f(0, 0, 1)  # Blue - Heaven stance
         return [0, 0, 1]
 
+def losehp():
+    global hit_point, last_hit
+    current_time = glutGet(GLUT_ELAPSED_TIME)
+    if current_time - last_hit >= 3000:
+        hit_point -= 1
+        last_hit = current_time
 
 
 
@@ -534,8 +540,8 @@ def enemy_collision():
         if boss_alive==False:
             for coord in range(len(enemy_coords)):
                 if enemy_coords[coord]!=None:
-                    if collision(player_x+10, player_x-10, player_y-50, player_y+50, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
-                        hit_point -= 1
+                    if collision(player_x-10, player_x+10, player_y-50, player_y+50, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
+                        losehp()
                     if player_dir == 0:
                         if collision(player_x+25, player_x+80, player_y-50, player_y-40, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
                             enemy_coords[coord] = None
@@ -549,7 +555,7 @@ def enemy_collision():
         else:
             # print(player_x+25, player_x+80, player_y-50, player_y-40, enemy_coords[0][0], enemy_coords[0][0], enemy_coords[0][1], enemy_coords[0][1])
             if collision(player_x+10, player_x-10, player_y-50, player_y+50, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
-                hit_point -= 1
+                losehp()
             if player_dir == 0:
                 if collision(player_x+25, player_x+80, player_y-50, player_y-40, enemy_coords[0][0]-20, enemy_coords[0][0]+20, enemy_coords[0][1]-100, enemy_coords[0][1]+200):
                     print('?')
@@ -572,7 +578,7 @@ def enemy_collision():
         for coord in range(len(enemy_coords)):
             if enemy_coords[coord]!=None:
                 if collision(player_x+10, player_x-10, player_y-50, player_y+50, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
-                    hit_point -= 1
+                    losehp()
         for coord in range(len(projectiles)):
             if projectiles[coord]!=None:
                 if player_dir == 0:
@@ -582,7 +588,7 @@ def enemy_collision():
                             points += 100
                             hit_point+=1
                         else:
-                            hit_point-=1
+                            losehp()
                 else:
                     if collision(player_x-50, player_x-25, player_y-100, player_y+100, projectiles[coord][0], projectiles[coord][0], projectiles[coord][1], projectiles[coord][1]):
                         if player_stance==projectiles[coord][2]:
@@ -590,21 +596,21 @@ def enemy_collision():
                             points += 100
                             hit_point+=1
                         else:
-                            hit_point-=1
+                            losehp()
     if player_attack_state == 0:
         for coord in range(len(enemy_coords)):
             if enemy_coords[coord]!=None:
                 if collision(player_x-10, player_x+10, player_y-50, player_y+50, enemy_coords[coord][0], enemy_coords[coord][0], enemy_coords[coord][1], enemy_coords[coord][1]):
-                    hit_point -= 1
+                    losehp()
         for coord in range(len(projectiles)):
             if projectiles[coord]!=None:
                 # print(player_x+10, player_x-10, player_y-50, player_y+50, projectiles[coord][0], projectiles[coord][0], projectiles[coord][1], enemy_coords[coord][1])
                 if player_dir == 0:
                     if collision(player_x-10, player_x+10, player_y-50, player_y+50, projectiles[coord][0], projectiles[coord][0], projectiles[coord][1], projectiles[coord][1]):
-                            hit_point-=1
+                            losehp()
                 else:
                     if collision(player_x-10, player_x+10, player_y-50, player_y+50, projectiles[coord][0], projectiles[coord][0], projectiles[coord][1], projectiles[coord][1]):
-                            hit_point-=1
+                            losehp()
     if hit_point<=0:
         print('Game Over')
         glutLeaveMainLoop()
