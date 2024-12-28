@@ -2,8 +2,8 @@
 
 ## Developers
 
-- **Tahmid Iqbal** ([TahmidRaven](https://github.com/TahmidRaven))
 - **Rikth Humayun** ([megaeonise](https://github.com/megaeonise))
+- **Tahmid Iqbal** ([TahmidRaven](https://github.com/TahmidRaven))
 - **Zannatun Tazree** ([zannatuntazree](https://github.com/zannatuntazree))
 
 ---
@@ -52,7 +52,6 @@ Choose your stance wisely:
 ## Screenshots of the GameConsole & Test-of-Strength Game
 ![image](https://github.com/user-attachments/assets/dfba295a-9af9-46e4-bbb8-c856c20d2b59)
 ![image](https://github.com/user-attachments/assets/3857eaf0-84a5-4f2d-b3ba-0d6638c31cff)
-![image](https://github.com/user-attachments/assets/bcf37e1c-7f52-4ffe-9846-1e195c65014c)
 ![image](https://github.com/user-attachments/assets/23e17667-8087-4859-a469-f98db74a30d9)
 
 ---
