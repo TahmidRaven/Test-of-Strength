@@ -7,6 +7,9 @@
 - **Zannatun Tazree** ([zannatuntazree](https://github.com/zannatuntazree))
 
 ---
+## How to Install
+You would need to have the *OpenGL library folder* in your local-device and download the **game.py** at the root
+No other installations are needed.
 
 ## How to Play
 
@@ -22,6 +25,11 @@ Survive waves of enemies, defeat them to earn points, and prepare for the ultima
 - **Left Click**: Attack enemies.
 - **Right Click**: Block enemy attacks.
 - **Spacebar**: Jump or Parry.
+
+#### Versions in Branches
+- If you go to the tahmid1_drawing_char branch you can individually run each file to see realtime progress
+- If you checkout to animation branch you can see the implementation of animation
+- Main branch contains **game.py** which is the **final build** 
 
 ### Game States
 
